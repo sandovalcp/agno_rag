@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat Multi-Agente de Loteria</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <main class="container">
+    <h1>🎯 Chat Multi-Agente (Agno 2.5.2)</h1>
+    <p>Analista Histórico + Estatístico + Intuição Aleatória + Coordenador</p>
+
+    <div id="chat" class="chat"></div>
+
+    <form id="chat-form" class="chat-form">
+      <input id="mensagem" type="text" placeholder="Ex: Quero 5 jogos equilibrados" required />
+      <button type="submit">Enviar</button>
+    </form>
+  </main>
+
+  <script>
+    const chatEl = document.getElementById('chat');
+    const formEl = document.getElementById('chat-form');
+    const inputEl = document.getElementById('mensagem');
+    let sessionId = localStorage.getItem('session_id') || null;
+
+    function addMessage(role, text) {
+      const item = document.createElement('div');
+      item.className = `msg ${role}`;
+      item.textContent = text;
+      chatEl.appendChild(item);
+      chatEl.scrollTop = chatEl.scrollHeight;
+    }
+
+    formEl.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const mensagem = inputEl.value.trim();
+      if (!mensagem) return;
+
+      addMessage('user', mensagem);
+      inputEl.value = '';
+
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({mensagem, session_id: sessionId}),
+      });
+
+      const data = await response.json();
+      sessionId = data.session_id;
+      localStorage.setItem('session_id', sessionId);
+
+      const jogos = (data.detalhes.jogos_finais || []).map(j => `[${j.join(', ')}]`).join('\n');
+      addMessage('assistant', `${data.resumo}\n\nJogos sugeridos:\n${jogos}`);
+    });
+  </script>
+</body>
+</html>
