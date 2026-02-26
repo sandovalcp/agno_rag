@@ -24,6 +24,34 @@ Este projeto implementa um **chat multi-agente assíncrono** para sugestão de j
 - `static/styles.css`: estilos da interface.
 - `doc_pdf/`: pasta de PDFs usados no RAG híbrido.
 
+
+## Como baixar o projeto
+
+### Opção 1: via Git (recomendado)
+
+```bash
+git clone https://github.com/<seu-usuario-ou-org>/<seu-repositorio>.git
+cd <seu-repositorio>
+```
+
+> Se você já estiver autenticado no GitHub, também pode usar a URL SSH:
+
+```bash
+git clone git@github.com:<seu-usuario-ou-org>/<seu-repositorio>.git
+cd <seu-repositorio>
+```
+
+### Opção 2: baixar ZIP
+
+1. Acesse a página do repositório no GitHub.
+2. Clique em **Code**.
+3. Clique em **Download ZIP**.
+4. Extraia o arquivo e abra a pasta do projeto.
+
+### Depois de baixar
+
+Siga a seção **Como rodar localmente** deste README para criar o ambiente, instalar dependências e iniciar a API.
+
 ## Como rodar localmente
 
 ```bash
