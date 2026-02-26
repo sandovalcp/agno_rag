@@ -1,0 +1,12 @@
+version: '3.9'
+services:
+  multi-agent-api:
+    build: .
+    container_name: agno_multi_agent_api
+    ports:
+      - "8000:8000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    volumes:
+      - ./doc_pdf:/app/doc_pdf
+      - ./db:/app/db
