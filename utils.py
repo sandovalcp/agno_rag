@@ -3,7 +3,6 @@ from typing import Any, Dict, List, Optional
 import streamlit as st
 from agentic_rag import get_agentic_rag_agent
 from agno.agent import Agent
-from agno.models.response import ToolExecution
 from agno.utils.log import logger
 
 
@@ -39,44 +38,53 @@ def export_chat_history():
     return ""
 
 
-def display_tool_calls(tool_calls_container, tools: List[ToolExecution]):
+def display_tool_calls(tool_calls_container, tools: List[Any]):
     """Display tool calls in a streamlit container with expandable sections.
+
+    Suporta tanto objetos `ToolExecution` quanto dicionários serializados.
 
     Args:
         tool_calls_container: Streamlit container to display the tool calls
-        tools: List of tool call dictionaries containing name, args, content, and metrics
+        tools: Lista de chamadas de ferramentas (objeto ou dict)
     """
     if not tools:
         return
 
+    def _extract_field(tool_call: Any, *field_names: str, default: Any = None) -> Any:
+        if isinstance(tool_call, dict):
+            for name in field_names:
+                if name in tool_call and tool_call[name] is not None:
+                    return tool_call[name]
+            return default
+
+        for name in field_names:
+            value = getattr(tool_call, name, None)
+            if value is not None:
+                return value
+        return default
+
     with tool_calls_container.container():
         for tool_call in tools:
-            # Handle different tool call formats
-            _tool_name = tool_call.tool_name or "Unknown Tool"
-            _tool_args = tool_call.tool_args or {}
-            _content = tool_call.result or ""
-            _metrics = tool_call.metrics or {}
+            _tool_name = _extract_field(tool_call, "tool_name", "name", default="Unknown Tool")
+            _tool_args = _extract_field(tool_call, "tool_args", "args", "arguments", default={})
+            _content = _extract_field(tool_call, "result", "content", "output", default="")
+            _metrics = _extract_field(tool_call, "metrics", default={})
 
-            # Safely create the title with a default if tool name is None
-            title = f"🛠️ {_tool_name.replace('_', ' ').title() if _tool_name else 'Tool Call'}"
+            title = f"🛠️ {str(_tool_name).replace('_', ' ').title() if _tool_name else 'Tool Call'}"
 
             with st.expander(title, expanded=False):
-                if isinstance(_tool_args, dict) and "query" in _tool_args:
+                if isinstance(_tool_args, dict) and "query" in _tool_args and _tool_args["query"]:
                     st.code(_tool_args["query"], language="sql")
-                # Handle string arguments
                 elif isinstance(_tool_args, str) and _tool_args:
                     try:
-                        # Try to parse as JSON
                         import json
 
                         args_dict = json.loads(_tool_args)
                         st.markdown("**Arguments:**")
                         st.json(args_dict)
-                    except:
-                        # If not valid JSON, display as string
+                    except Exception:
                         st.markdown("**Arguments:**")
                         st.markdown(f"```\n{_tool_args}\n```")
-                # Handle dict arguments
                 elif _tool_args and _tool_args != {"query": None}:
                     st.markdown("**Arguments:**")
                     st.json(_tool_args)
@@ -89,22 +97,19 @@ def display_tool_calls(tool_calls_container, tools: List[ToolExecution]):
                         try:
                             st.json(_content)
                         except Exception:
-                            st.markdown(_content)
+                            st.markdown(str(_content))
 
                 if _metrics:
                     st.markdown("**Metrics:**")
                     if isinstance(_metrics, dict):
                         st.json(_metrics)
                     else:
-                        # Fallback para objetos que não têm to_dict()
                         try:
                             st.json(_metrics.to_dict())
                         except AttributeError:
-                            # Se não tem to_dict(), tenta converter para dict usando vars()
                             try:
                                 st.json(vars(_metrics))
-                            except:
-                                # Se tudo falhar, exibe como string
+                            except Exception:
                                 st.text(str(_metrics))
 
 
